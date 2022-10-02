@@ -101,7 +101,7 @@
     };
 
     let midiDevices: GridController[] = [];
-    let midiDeviceInfos: DeviceInfoCanvas = [];
+    let midiDeviceInfos: DeviceInfoCanvas[] = [];
 
     const deviceKeyPressed: KeyPress = (deviceID: number, keyID: KeyID) => {
         console.info(`Device ${deviceID} Button ${keyID} has been pressed`);
@@ -176,9 +176,10 @@
                     toast.push(
                         $t("toast.connected", {device_name: event.device})
                     );
+
                     midiDevices[0].connect(
-                        GridController.availableDeviceInputs()[event.device],
-                        GridController.availableDeviceOutputs()[event.device],
+                        settings.deviceInput,
+                        settings.deviceOutput,
                         settings.deviceConfig
                     );
                 } else {
@@ -308,9 +309,9 @@
                         }
                     );
                     midiDevices[0].connect(
-                        GridController.availableDeviceInputs()[settings.deviceInput!],
-                        GridController.availableDeviceOutputs()[settings.deviceOutput!],
-                        GridController.configList()[settings.deviceConfig!]
+                        settings.deviceInput,
+                        settings.deviceOutput,
+                        settings.deviceConfig
                     );
                 } else {
                     toast.push(
@@ -510,21 +511,15 @@
 
                     <div class="setting-option">
                         <Dropdown
-                                value={reactiveVars.activeDevice}
-                                options={Object.keys(
-                                GridController.availableDevices()
-                            )}
-                                placeholder={$t("device.no_device")}
-                                on:change={(e) => {
-                                settings.deviceInput = e.detail.value;
-                                settings.deviceOutput = e.detail.value;
+                            value={reactiveVars.activeDevice}
+                            options={GridController.availableDevices().map(x => [x.name, x])}
+                            placeholder={$t("device.no_device")}
+                            on:change={(e) => {
+                                settings.deviceInput = e.detail.value[0];
+                                settings.deviceOutput = e.detail.value[0];
                                 if (e.detail.value) {
                                     midiDeviceInfos[0] = undefined;
-                                    midiDevices[0].connectDevice(
-                                        GridController.availableDevices()[
-                                            e.detail.value
-                                        ]
-                                    );
+                                    midiDevices[0].connectDevice(e.detail.value[1]);
                                 } else {
                                     midiDevices[0].disconnect();
                                 }
@@ -541,17 +536,13 @@
                     <div class="setting-option">
                         <Dropdown
                                 value={reactiveVars.activeInput}
-                                options={Object.keys(
-                                GridController.availableDeviceInputs()
-                            )}
+                                options={ GridController.availableDeviceInputs().map(x => [x.name, x])}
                                 placeholder={$t("device.no_device")}
                                 on:change={(e) => {
-                                settings.deviceInput = e.detail.value;
+                                settings.deviceInput = e.detail.value[0];
                                 midiDeviceInfos[0] = undefined;
                                 midiDevices[0].connect(
-                                    GridController.availableDeviceInputs()[
-                                        e.detail.value
-                                    ],
+                                    e.detail.value[1],
                                     midiDevices[0].activeOutput,
                                     midiDevices[0].activeConfig
                                 );
@@ -568,18 +559,14 @@
                     <div class="setting-option">
                         <Dropdown
                                 value={reactiveVars.activeOutput}
-                                options={Object.keys(
-                                GridController.availableDeviceOutputs()
-                            )}
+                                options={GridController.availableDeviceOutputs().map(x => [x.name, x])}
                                 placeholder={$t("device.no_device")}
                                 on:change={(e) => {
-                                settings.deviceOutput = e.detail.value;
+                                settings.deviceOutput = e.detail.value[0];
                                 midiDeviceInfos[0] = undefined;
                                 midiDevices[0].connect(
                                     midiDevices[0].activeInput,
-                                    GridController.availableDeviceOutputs()[
-                                        e.detail.value
-                                    ],
+                                    e.detail.value[1],
                                     midiDevices[0].activeConfig
                                 );
                             }}

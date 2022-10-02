@@ -55,10 +55,10 @@ export class GridController {
         console.log(e);
     }
 
-    static deviceList:{[name:string]: MidiDevice} = {};
+    static deviceList:MidiDevice[] = [];
     static updateDeviceList(strict_mode = true, callback = false)
     {
-        let devices:{[name:string]: MidiDevice} = {};
+        let devices:MidiDevice[] = []
 
         for(const input of WebMidi.inputs)
         {
@@ -81,7 +81,7 @@ export class GridController {
                     if(strict_mode && config === undefined)
                         break;
 
-                    devices[input.name] = new MidiDevice(input.name, input, output, config);
+                    devices.push(new MidiDevice(input.name, input, output, config));
                     break;
                 }
             }
@@ -89,11 +89,13 @@ export class GridController {
 
         if(callback)
         {
-            for(var new_connection of Object.keys(devices).filter(x => !Object.keys(GridController.deviceList).includes(x)))
+            var new_devices = devices.map(x => x.name);
+            var old_devices = GridController.deviceList.map(x => x.name);
+            for(var new_connection of new_devices.filter(x => !old_devices.includes(x)))
             {
                 this.callback({event:"connected", device:new_connection});
             }
-            for(var removed_connection of Object.keys(GridController.deviceList).filter(x => !Object.keys(devices).includes(x)))
+            for(var removed_connection of old_devices.filter(x => !new_devices.includes(x)))
             {
                 this.callback({event:"disconnected", device:removed_connection});
             }
@@ -114,25 +116,23 @@ export class GridController {
         DeviceConfigs[config.name] = config;
     }
 
-    static availableDevices() : {[name:string]: MidiDevice}
+    static availableDevices() : MidiDevice[]
     {
         return GridController.updateDeviceList(true, false);
     }
 
     /** Returns all the available MIDI inputs. */
-    static availableDeviceInputs() : {[name:string]: Input}
+    static availableDeviceInputs() : Input[]
     {
-        var inputs:{[name:string]: Input} = {}
-        WebMidi.inputs.forEach(input => inputs[input.name] = input);
-        return inputs;
+        console.log(WebMidi.inputs);
+        return WebMidi.inputs;
     }
 
     /** Returns all the available MIDI ouputs. */
-    static availableDeviceOutputs() : {[name:string]: Output}
+    static availableDeviceOutputs() : Output[]
     {
-        var outputs:{[name:string]: Output} = {}
-        WebMidi.outputs.forEach(output => outputs[output.name] = output);
-        return outputs;
+        console.log(WebMidi.outputs);
+        return WebMidi.outputs;
     }
 
     deviceDisconnectedHandler(e: any)
@@ -194,14 +194,45 @@ export class GridController {
     {
         this.disconnect();
         if(!device) return;
+        console.log(device);
         this.connect(device.input, device.output, device.config);
     }
 
-    connect(input_device:Input|undefined, output_device:Output|undefined, config?:GridDeviceConfig|string) 
+    connect(input_device:Input|string|undefined, output_device:Output|string|undefined, config?:GridDeviceConfig|string) 
     {
         this.disconnect();
-        this.activeInput = input_device;
-        this.activeOutput = output_device;
+
+        if(typeof input_device === 'string' || input_device instanceof String)
+        {
+            for(var input of GridController.availableDeviceInputs())
+            {
+                if(input.name == input_device)
+                {
+                    this.activeInput = input;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            this.activeInput = input_device;
+        }
+
+        if(typeof output_device === 'string' || output_device instanceof String)
+        {
+            for(var output of GridController.availableDeviceOutputs())
+            {
+                if(output.name == output_device)
+                {
+                    this.activeOutput = output;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            this.activeOutput = output_device;
+        }
 
         if(input_device === undefined && output_device === undefined)
         {
@@ -220,10 +251,10 @@ export class GridController {
         {
             //Input
             let input_config : GridDeviceConfig|undefined = undefined;
-            if(input_device)
+            if(this.activeInput)
             {
-                console.log(`Attempting find input config for ${input_device.name}`);
-                let input_name : string = input_device?.name;
+                console.log(`Attempting find input config for ${this.activeInput.name}`);
+                let input_name : string = this.activeInput?.name;
                 for (const name in DeviceConfigs) 
                 {
                     let config_regex : string = DeviceConfigs[name].midiNameRegex!;
@@ -238,10 +269,10 @@ export class GridController {
 
             //Output
             let output_config : GridDeviceConfig|undefined = undefined;
-            if(output_device)
+            if(this.activeOutput)
             {
-                console.log(`Attempting find output config for ${output_device.name}`);
-                let output_name : string = output_device?.name;
+                console.log(`Attempting find output config for ${this.activeOutput.name}`);
+                let output_name : string = this.activeOutput?.name;
                 for (const name in DeviceConfigs) 
                 {
                     let config_regex : string = DeviceConfigs[name].midiNameRegex!;

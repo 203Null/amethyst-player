@@ -2,9 +2,9 @@
     import CaretDownIcon from "carbon-icons-svelte/lib/CaretDown.svelte";
     import { createEventDispatcher } from 'svelte';
 
-    export let options: string[];
-    export let value: string | undefined;
-    export let placeholder: string|undefined;
+    export let options: string[] | [string, any][];
+    export let value: string | [string, any] | undefined;
+    export let placeholder: string | undefined;
     let index:number;
 
     let showOptions: boolean;
@@ -39,7 +39,10 @@
 <div style="display: flex; flex-direction: column;">
     <div class="dropdown-select-body" bind:this={dropdownButton} on:click={() => showOptions = !showOptions}>
         <div class="left-portion">
-            <span>{value !== undefined ? value : placeholder}</span>
+            <span>{
+                value === undefined ? placeholder :
+                (value instanceof Array ? value[0] : value)
+            }</span>
         </div>
 
         <div class="right-portion">
@@ -59,14 +62,14 @@
                 {placeholder}
             </div>
             {/if}
-            {#each options as option}
+            {#each options as option, i}
                 <div class="dropdown-option" on:click={() => {
                     value = option;
                     showOptions = false;
-                    index = options.indexOf(option);
+                    index = i;
                     dispatch("change", {value:value, index:index});
                 }}>
-                    {option}
+                    {option instanceof Array ? option[0] : option}
                 </div>
             {/each}
         </div>
