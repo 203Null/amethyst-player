@@ -14,6 +14,33 @@
       // console.log(styles);  
       button.style.backgroundColor = color.rgb_str();
     }
+
+    // Touch event handler functions
+    function handleTouchStart(event: TouchEvent) {
+        event.preventDefault(); // Prevent default behavior
+        active = true;
+        if (keyPress) {
+            keyPress(deviceID, id);
+        }
+    }
+
+    function handleTouchEnd(event: TouchEvent) {
+        event.preventDefault(); // Prevent default behavior
+        active = false;
+        if (keyRelease) {
+            keyRelease(deviceID, id);
+        }
+    }
+
+    function handleTouchCancel(event: TouchEvent) {
+        event.preventDefault(); // Prevent default behavior
+        if(active) {
+            active = false;
+            if (keyRelease) {
+                keyRelease(deviceID, id);
+            }
+        }
+    }
 </script>
 
 <button class={$$props.class} style={$$props.style} bind:this={button}
@@ -38,7 +65,10 @@
       active = false;
       keyRelease(deviceID, id);
     }
-  }}>
+  }}
+  on:touchstart={handleTouchStart}
+  on:touchend={handleTouchEnd}
+  on:touchcancel={handleTouchCancel}>
 </button>
 
 <style>

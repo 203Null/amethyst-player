@@ -1,6 +1,6 @@
 # Amethyst Player
 
-A web player for Amethyst that supports Launchpad/Mystrix//Midi Figher 64
+A web player for Amethyst that supports Launchpad/Mystrix/MIDI Fighter 64
 
 ## Keybind
 | Key            | Function                 |
